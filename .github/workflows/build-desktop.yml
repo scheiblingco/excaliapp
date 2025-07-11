@@ -3,7 +3,7 @@ name: Wails build
 on:
   push:
     branches:
-      - add-desktop
+      - main
     # tags:
     #   - '*'
 
