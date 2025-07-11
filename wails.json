@@ -1,0 +1,13 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "excaliapp",
+  "outputfilename": "excaliapp",
+  "frontend:install": "bun install",
+  "frontend:build": "bun run build:wails",
+  "frontend:dev:watcher": "bun run build:wails --watch",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "scheiblingco",
+    "email": "it@scheibling.se"
+  }
+}

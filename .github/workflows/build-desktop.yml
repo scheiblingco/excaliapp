@@ -1,0 +1,71 @@
+name: Wails build
+
+on:
+  push:
+    branches:
+      - add-desktop
+    # tags:
+    #   - '*'
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+jobs:
+  build:
+    strategy:
+    # Failure in one platform build won't impact the others
+      fail-fast: false
+      matrix:
+        build:
+          # - name: 'excaliapp'
+          #   platform:  'linux/amd64'
+          #   os: 'ubuntu-latest'
+          - name: 'excaliapp'
+            platform:  'windows/amd64'
+            os: 'windows-2025'
+          # - name: 'excaliapp'
+          #   platform:  'darwin/universal'
+          #   os: 'macos-latest'
+
+    runs-on: ${{ matrix.build.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build wails
+        uses: dAppServer/wails-build-action@v2.2
+        id: build
+        if: matrix.build.platform != 'windows/amd64'
+        with:
+          build-name: ${{ matrix.build.name }}
+          build-platform: ${{ matrix.build.platform }}
+          package: false
+          go-version: '1.24.2'
+      
+      - name: Fetch AzureSignTool
+        if: matrix.build.platform == 'windows/amd64'
+        run: |
+          $ErrorActionPreference = "Stop"
+          Invoke-WebRequest -Uri "https://github.com/OSSign/goast/releases/latest/download/azuresigntool.exe" -OutFile "C:\a\azuresigntool.exe"
+
+      - name: Build wails
+        uses: dAppServer/wails-build-action@v2.2
+        id: build
+        if: matrix.build.platform == 'windows/amd64'
+        env:
+          AZURESIGNTOOL_VAULT: ${{ secrets.AST_VAULT }}
+          AZURESIGNTOOL_CERT: ${{ secrets.AST_CERT }}
+          AZURESIGNTOOL_IDENT: ${{ secrets.AST_IDENT }}
+          AZURESIGNTOOL_SECRET: ${{ secrets.AST_SECRET }}
+          AZURESIGNTOOL_TENANT: ${{ secrets.AST_TENANT }}
+          AZURESIGNTOOL_TIMESTAMP: ${{ secrets.AST_TIMESTAMP }}
+          AZURESIGNTOOL_TD: ${{ secrets.AST_TD }}
+        with:
+          build-name: ${{ matrix.build.name }}
+          build-platform: ${{ matrix.build.platform }}
+          package: false
+          nsis: true
+          go-version: '1.24.2'
+      

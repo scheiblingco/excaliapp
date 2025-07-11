@@ -1,0 +1,15 @@
+{
+	"fixed": {
+		"file_version": "1.0.0"
+	},
+	"info": {
+		"0000": {
+			"ProductVersion": "1.0.0",
+			"CompanyName": "Scheibling Consulting AB",
+			"FileDescription": "A desktop version of excaliapp",
+			"LegalCopyright": "-",
+			"ProductName": "excaliapp",
+			"Comments": "A desktop version of excaliapp"
+		}
+	}
+}

@@ -1,3 +1,5 @@
+import * as FSYS from '../../frontend/wailsjs/go/main/App'
+import * as FSYSTYPES from '../../frontend/wailsjs/go/models'
 // File Storage Service for Excalidraw drawings
 // This is a sample implementation using localStorage that can be easily replaced with a real API
 
@@ -5,7 +7,7 @@ export interface ExcalidrawFile {
   id?: string;
   userId: string;
   name: string;
-  data: string; // Serialized Excalidraw data
+  data?: string; // Serialized Excalidraw data
   thumbnail?: string; // Base64 thumbnail
   createdAt: string;
   updatedAt: string;
@@ -39,6 +41,67 @@ export type Storage = {
   duplicateFile: (fileId: string, newName?: string) => Promise<ExcalidrawFile>;
   exportToCloud?: (fileId: string) => Promise<{ shareUrl: string }>;
   importFromUrl?: (url: string) => Promise<ExcalidrawFile>;
+}
+
+class UserdataStorage implements StorageBackend {
+  public listFiles = async (userId?: string): Promise<Record<string, ExcalidrawFile>> => {
+    const files = await FSYS.ListFiles();
+
+    let out = files.map((file: FSYSTYPES.main.ExcalidrawFile) => (
+      file as ExcalidrawFile
+    ));
+
+    return out.reduce((acc, file) => {
+      acc[file.id] = {
+        ...file,
+        inStorage: 'wails',
+      };
+      return acc;
+    }, {});
+
+  }
+  
+  public getFile = async (fileId: string): Promise<ExcalidrawFile | null> => {
+    const file = await FSYS.GetFile(fileId);
+    if (!file) return null;
+
+    return {
+      ...file,
+      inStorage: 'wails',
+    };
+  }
+
+  public saveFile = async (request: SaveFileRequest): Promise<ExcalidrawFile> => {
+    if (!request.id || request.id === null || request.id === undefined || request.id === '') {
+      request.id = Math.random().toString(36);
+    }
+
+    const file: FSYSTYPES.main.ExcalidrawFile = {
+      id: request.id,
+      userId: request.userId,
+      name: request.name || 'Untitled',
+      data: request.data || '',
+      thumbnail: request.thumbnail || '',
+      createdAt: "",
+      updatedAt: "",
+      isPublic: request.isPublic || false,
+      inStorage: 'wails',
+    };
+
+    await FSYS.SaveFile(file);
+
+    return {
+      ...file,
+    };
+  }
+
+  public deleteFile = async (fileId: string): Promise<void> => {
+    return FSYS.DeleteFile(fileId);
+  }
+  
+  public isAvailable = async (): Promise<boolean> => {
+    return import.meta.env.MODE === 'wails';
+  }
 }
 
 class LocalStorage implements StorageBackend {
@@ -206,6 +269,11 @@ export class StorageService implements Storage {
   private storage: StorageBackend | null = null;
 
   constructor(key: string) {
+    if (import.meta.env.MODE === 'wails') {
+      this.storage = new UserdataStorage();
+      return;
+    }
+
     if (import.meta.env.MODE !== 'browser') {
       this.storage = new ApiStorage(key);
       return;
@@ -247,6 +315,7 @@ export class StorageService implements Storage {
     return this.saveFile({
       ...originalFile,
       name: newName || `${originalFile.name} (Copy)`,
+      id: undefined, // Generate new ID
     });
   }
 }

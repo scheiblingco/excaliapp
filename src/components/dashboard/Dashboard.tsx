@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from 'react-oidc-context';
 import { User } from 'oidc-client-ts';
 
+import { Greet } from '../../../frontend/wailsjs/go/main/App'
+
 interface DashboardProps {
   onOpenEditor: (fileId?: string) => void;
   onLogout: () => void;
@@ -23,6 +25,20 @@ export function Dashboard({ onOpenEditor, onLogout, storageService }: DashboardP
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  const [greetContent, setGreetContent] = useState<string | null>(null);
+  const doGreet = () => {
+    Greet("Stephen").then((greeting) => {
+      setGreetContent(greeting);
+    }).catch((error) => {
+      console.error("Error greeting:", error);
+      toast({
+        title: "Error",
+        description: "Could not fetch greeting.",
+        variant: "destructive",
+      });
+    });
+  }
 
   const auth = useAuth();
 
@@ -85,16 +101,14 @@ export function Dashboard({ onOpenEditor, onLogout, storageService }: DashboardP
 
   const handleDuplicateFile = async (fileId: string) => {
     try {
-      const duplicatedFile = await storageService.duplicateFile(fileId);
-      setFiles(prevFiles => ({
-        ...prevFiles,
-        [duplicatedFile.id]: duplicatedFile,
-      }));
-      // setFiles([duplicatedFile, ...files]);
+      await storageService.duplicateFile(fileId);
       toast({
         title: "Drawing duplicated",
         description: "A copy of your drawing has been created.",
       });
+
+      await loadFiles();
+      
     } catch (error) {
       toast({
         title: "Error duplicating file",
@@ -163,6 +177,8 @@ export function Dashboard({ onOpenEditor, onLogout, storageService }: DashboardP
                 Your drawings
               </p>
             </CardContent>
+            <button onClick={() => doGreet()}>Greet!</button>
+            {greetContent}
           </Card>
 
           <Card>
@@ -175,7 +191,7 @@ export function Dashboard({ onOpenEditor, onLogout, storageService }: DashboardP
                 {Object.values(files).filter(f => f.isPublic).length}
               </div>
               <p className="text-xs text-muted-foreground">
-                Publicly shared drawings {import.meta.env.MODE === 'browser' ? '(not available in browser mode)' : ''}
+                Publicly shared drawings {import.meta.env.MODE === 'browser' ? '(not available in browser mode)' : import.meta.env.MODE === 'wails' ? '(available in desktop mode)' : ''}
               </p>
             </CardContent>
           </Card>
@@ -186,7 +202,7 @@ export function Dashboard({ onOpenEditor, onLogout, storageService }: DashboardP
               <UserIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold capitalize">{import.meta.env.MODE === 'browser' ? 'Local Storage' : import.meta.env.VITE_OIDC_LABEL}</div>
+              <div className="text-2xl font-bold capitalize">{import.meta.env.MODE === 'browser' ? 'Local Storage' : import.meta.env.MODE === 'wails' ? 'Desktop' : import.meta.env.VITE_OIDC_LABEL}</div>
               <p className="text-xs text-muted-foreground">
                 Authentication provider
               </p>

@@ -8,6 +8,7 @@
     "dev:browser": "vite --mode browser",
     "dev:cloudflare": "vite --mode cloudflare",
     "build:dev": "vite build --mode development",
+    "build:wails": "vite build --mode wails",
     "build:browser": "vite build --mode browser",
     "build:cloudflare": "vite build --mode cloudflare",
     "lint": "eslint .",

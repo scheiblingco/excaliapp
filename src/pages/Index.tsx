@@ -47,6 +47,14 @@ const Index = () => {
       setIsLoading(false);
     };
 
+    if (import.meta.env.MODE === 'wails') {
+      if (appState === '') {
+        setAppState('dashboard');
+      }
+      setIsLoading(false);
+      return;
+    } 
+
     checkAuth();
   }, [ auth.isLoading, auth.isAuthenticated, locallyLoggedIn ]);
 
