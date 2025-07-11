@@ -36,7 +36,7 @@ jobs:
           submodules: recursive
 
       - name: Build wails
-        uses: dAppServer/wails-build-action@v3
+        uses: dAppServer/wails-build-action@main
         id: buildother
         if: matrix.build.platform != 'windows/amd64'
         with:
@@ -52,7 +52,7 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/OSSign/goast/releases/latest/download/azuresigntool.exe" -OutFile "C:\a\azuresigntool.exe"
 
       - name: Build wails
-        uses: dAppServer/wails-build-action@v3
+        uses: dAppServer/wails-build-action@main
         id: build
         if: matrix.build.platform == 'windows/amd64'
         env:
