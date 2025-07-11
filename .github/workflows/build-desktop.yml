@@ -69,3 +69,8 @@ jobs:
           nsis: true
           go-version: '1.24.2'
       
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: build/bin/
