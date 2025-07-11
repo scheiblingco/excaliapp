@@ -49,7 +49,7 @@ jobs:
         if: matrix.build.platform == 'windows/amd64'
         run: |
           $ErrorActionPreference = "Stop"
-          Invoke-WebRequest -Uri "https://github.com/OSSign/goast/releases/latest/download/azuresigntool.exe" -OutFile "C:\a\azuresigntool.exe"
+          Invoke-WebRequest -Uri "https://github.com/OSSign/goast/releases/latest/download/azuresigntool.exe" -OutFile "D:\a\azuresigntool.exe"
 
       - name: Build wails
         uses: dAppServer/wails-build-action@main
