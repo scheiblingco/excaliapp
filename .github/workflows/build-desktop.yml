@@ -11,7 +11,7 @@ env:
   NODE_OPTIONS: "--max-old-space-size=4096"
 
 jobs:
-  binbuild:
+  build:
     strategy:
     # Failure in one platform build won't impact the others
       fail-fast: false
@@ -36,7 +36,7 @@ jobs:
 
       - name: Build wails
         uses: dAppServer/wails-build-action@v2.2
-        id: build
+        id: buildother
         if: matrix.build.platform != 'windows/amd64'
         with:
           build-name: ${{ matrix.build.name }}
