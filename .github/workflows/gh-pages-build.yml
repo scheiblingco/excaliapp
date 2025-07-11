@@ -32,8 +32,9 @@ jobs:
 
       - name: Build
         run: |
-          pnpm install
-          pnpm run build:browser
+          npm install -g bun
+          bun install
+          bun run build:browser
           
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3.0.1
