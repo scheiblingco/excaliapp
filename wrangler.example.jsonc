@@ -1,0 +1,29 @@
+{
+  "name": "excaliapp",
+    "routes": [
+    {
+      "pattern": "my.domain.org",
+      "custom_domain": true
+    }
+  ],
+  "compatibility_date": "2025-04-03",
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*"
+    ],
+    "directory": "dist/excaliapp"
+  },
+  "main": "./worker/index.ts",
+  "d1_databases": [
+    {
+      "binding": "excaliapp_db",
+      "database_name": "excaliapp",
+      "database_id": "12345678-1234-1234-1234-123456789012"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}
