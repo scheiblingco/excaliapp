@@ -55,7 +55,6 @@ jobs:
           build-platform: ${{ matrix.build.platform }}
           package: false
           go-version: '1.24.2'
-      
 
       - name: Build wails
         uses: dAppServer/wails-build-action@main
@@ -92,7 +91,7 @@ jobs:
           timestampUrl: ${{ secrets.AST_TIMESTAMP }}
           vaultUrl: ${{ secrets.AST_VAULT }}
           files: build/bin/*
-          extensions: .exe;.msi
+          extensions: exe;msi
       
       - name: Build NSIS installer
         if: matrix.build.platform == 'windows/amd64'
@@ -108,7 +107,7 @@ jobs:
               exit $exitCode
           }
 
-          $process = Start-Process "C:\Program Files (x86)\NSIS\Bin\makensis.exe" -ArgumentList "-DARG_WAILS_AMD64_BINARY=..\..\bin\excaliapp.exe", ".\build\windows\installer\project.nsi" -Wait -PassThru
+          $process = Start-Process "C:\Program Files (x86)\NSIS\makensis.exe" -ArgumentList "-DARG_WAILS_AMD64_BINARY=..\..\bin\excaliapp.exe", ".\build\windows\installer\project.nsi" -Wait -PassThru
           $exitCode = $process.ExitCode
           if ($exitCode -eq 0) {
               Write-Host "MakeNSIS Successful."
