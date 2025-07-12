@@ -95,6 +95,14 @@ jobs:
       
       - name: Build NSIS installer
         if: matrix.build.platform == 'windows/amd64'
+        env:
+          AZURESIGNTOOL_VAULT: ${{ secrets.AST_VAULT }}
+          AZURESIGNTOOL_CERT: ${{ secrets.AST_CERT }}
+          AZURESIGNTOOL_IDENT: ${{ secrets.AST_IDENT }}
+          AZURESIGNTOOL_SECRET: ${{ secrets.AST_SECRET }}
+          AZURESIGNTOOL_TENANT: ${{ secrets.AST_TENANT }}
+          AZURESIGNTOOL_TIMESTAMP: ${{ secrets.AST_TIMESTAMP }}
+          AZURESIGNTOOL_TD: ${{ secrets.AST_TD }}
         run: |
           $ProgressPreference = 'SilentlyContinue'
           Invoke-WebRequest https://deac-riga.dl.sourceforge.net/project/nsis/NSIS%203/3.10/nsis-3.10-setup.exe?viasf=1 -OutFile .\nsis-3.10-setup.exe
