@@ -64,6 +64,7 @@ jobs:
           build-name: ${{ matrix.build.name }}.exe
           build-platform: ${{ matrix.build.platform }}
           package: false
+          nsis: true
           go-version: '1.24.2'
       
       - name: Save artifacts
@@ -78,6 +79,7 @@ jobs:
           $ErrorActionPreference = "Stop"
           Invoke-WebRequest -Uri "https://github.com/OSSign/goast/releases/latest/download/azuresigntool.exe" -OutFile "D:\a\azuresigntool.exe"
           ls .\build\bin\
+          rm .\build\bin\*installer.exe
 
       - name: Sign files
         uses: ossign/gha-sign-azuresigntool@main
