@@ -3,29 +3,35 @@ name: Wails build
 on:
   push:
     branches:
-      - add-desktop
-    # tags:
-    #   - '*'
+      - main
+    tags:
+      - '*'
 
 env:
   NODE_OPTIONS: "--max-old-space-size=4096"
 
+permissions:
+  contents: write
+
 jobs:
-  binbuild:
+  build:
     strategy:
     # Failure in one platform build won't impact the others
       fail-fast: false
       matrix:
         build:
-          # - name: 'excaliapp'
-          #   platform:  'linux/amd64'
-          #   os: 'ubuntu-latest'
+          - name: 'excaliapp'
+            platform:  'linux/amd64'
+            exesuffix: '-linux-amd64'
+            os: 'ubuntu-latest'
           - name: 'excaliapp'
             platform:  'windows/amd64'
+            exesuffix: '.exe'
             os: 'windows-2025'
-          # - name: 'excaliapp'
-          #   platform:  'darwin/universal'
-          #   os: 'macos-latest'
+          - name: 'excaliapp'
+            platform:  'darwin/universal'
+            exesuffix: '-macos-amd64.app'
+            os: 'macos-latest'
 
     runs-on: ${{ matrix.build.os }}
     steps:
@@ -33,27 +39,44 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      
+      - name: Setup Node Cache
+        uses: actions/cache@v4
+        with:
+          key: ${{ github.job }}-${{ hashFiles('**/package-lock.json') }}
+          path: node_modules
+      
+      - name: Install and build
+        run: |
+          npm i -g bun
+          bun install
+          bun run build:wails
 
       - name: Build wails
-        uses: dAppServer/wails-build-action@v2.2
+        uses: dAppServer/wails-build-action@main
         id: build
-        if: matrix.build.platform != 'windows/amd64'
         with:
-          build-name: ${{ matrix.build.name }}
+          build-name: ${{ matrix.build.name }}${{ matrix.build.exesuffix }}
           build-platform: ${{ matrix.build.platform }}
           package: false
+          nsis: ${{ matrix.build.platform == 'windows/amd64' }}
           go-version: '1.24.2'
       
-      - name: Fetch AzureSignTool
-        if: matrix.build.platform == 'windows/amd64'
-        run: |
-          $ErrorActionPreference = "Stop"
-          Invoke-WebRequest -Uri "https://github.com/OSSign/goast/releases/latest/download/azuresigntool.exe" -OutFile "C:\a\azuresigntool.exe"
-
-      - name: Build wails
-        uses: dAppServer/wails-build-action@v2.2
-        id: build
-        if: matrix.build.platform == 'windows/amd64'
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        # Only of not a tag
+        if: startsWith(github.ref, 'refs/heads/')
+        with:
+          name: windows
+          path: build/bin/
+      
+      - name: Build fully signed NSIS installer
+        if: matrix.build.platform == 'windows/amd64' && startsWith(github.ref, 'refs/tags/')
         env:
           AZURESIGNTOOL_VAULT: ${{ secrets.AST_VAULT }}
           AZURESIGNTOOL_CERT: ${{ secrets.AST_CERT }}
@@ -62,15 +85,41 @@ jobs:
           AZURESIGNTOOL_TENANT: ${{ secrets.AST_TENANT }}
           AZURESIGNTOOL_TIMESTAMP: ${{ secrets.AST_TIMESTAMP }}
           AZURESIGNTOOL_TD: ${{ secrets.AST_TD }}
-        with:
-          build-name: ${{ matrix.build.name }}
-          build-platform: ${{ matrix.build.platform }}
-          package: false
-          nsis: true
-          go-version: '1.24.2'
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -Uri "https://github.com/OSSign/goast/releases/latest/download/azuresigntool.exe" -OutFile "D:\a\azuresigntool.exe"
+          Invoke-WebRequest https://deac-riga.dl.sourceforge.net/project/nsis/NSIS%203/3.10/nsis-3.10-setup.exe?viasf=1 -OutFile .\nsis-3.10-setup.exe
+          $process = Start-Process ".\nsis-3.10-setup.exe" -ArgumentList "/S" -Wait -PassThru
+          $exitCode = $process.ExitCode
+          if ($exitCode -eq 0) {
+              Write-Host "Installer ran successfully."
+          } else {
+              Write-Host "Installer failed with exit code $exitCode."
+              exit $exitCode
+          }
+
+          echo "C:\Program Files (x86)\NSIS\Bin" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+          echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+
+          $env:PATH += ";C:\Program Files (x86)\NSIS\Bin;C:\Program Files (x86)\NSIS"
+          Write-Host "PATH updated to include NSIS."
+          ls "C:\Program Files (x86)\NSIS\"
+          ls "C:\Program Files (x86)\NSIS\Bin\"
+
+          rm .\build\bin\*installer.exe
+
+          D:\a\azuresigntool.exe build\bin\excaliapp.exe
+
+          makensis.exe "-DARG_WAILS_AMD64_BINARY=..\..\bin\excaliapp.exe" ".\build\windows\installer\project.nsi"          
       
-      - name: Save artifacts
-        uses: actions/upload-artifact@v4
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: windows
-          path: build/bin/
+          files: build/bin/
+          tag_name: ${{ github.ref_name }}
+          name: Version ${{ github.ref_name }}
+          body: |
+            ## Excaliapp Desktop Release
+            This release includes the latest desktop build of Excaliapp

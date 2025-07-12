@@ -32,6 +32,8 @@ Unicode true
 ####
 ## Include the wails tools
 ####
+
+
 !include "wails_tools.nsh"
 
 # The version information for this two must consist of 4 parts
@@ -67,19 +69,19 @@ ManifestDPIAware true
 !insertmacro MUI_LANGUAGE "English" # Set the Language of the installer
 
 ## The following two statements can be used to sign the installer and the uninstaller. The path to the binaries are provided in %1
-!uninstfinalize 'C:\a\azuresigntool.exe "%1"'
-!finalize 'C:\a\azuresigntool.exe "%1"'
+!uninstfinalize 'D:\a\azuresigntool.exe "%1"'
+!finalize 'D:\a\azuresigntool.exe "%1"'
 
 !macro sign.files
     !ifdef SUPPORTS_AMD64
         ${if} ${IsNativeAMD64}
-            ExecShell "C:\a\azuresigntool.exe" "${ARG_WAILS_AMD64_BINARY}"
+            ExecShell "D:\a\azuresigntool.exe" "${ARG_WAILS_AMD64_BINARY}"
         ${EndIf}
     !endif
 
     !ifdef SUPPORTS_ARM64
         ${if} ${IsNativeARM64}
-            ExecShell "C:\a\azuresigntool.exe" "${ARG_WAILS_ARM64_BINARY}"
+            ExecShell "D:\a\azuresigntool.exe" "${ARG_WAILS_ARM64_BINARY}"
         ${EndIf}
     !endif
 !macroend
