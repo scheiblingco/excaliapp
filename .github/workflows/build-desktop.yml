@@ -56,14 +56,13 @@ jobs:
           package: false
           go-version: '1.24.2'
       
-     
 
       - name: Build wails
         uses: dAppServer/wails-build-action@main
         id: build
         if: matrix.build.platform == 'windows/amd64'
         with:
-          build-name: ${{ matrix.build.name }}
+          build-name: ${{ matrix.build.name }}.exe
           build-platform: ${{ matrix.build.platform }}
           package: false
           go-version: '1.24.2'
@@ -80,7 +79,6 @@ jobs:
           $ErrorActionPreference = "Stop"
           Invoke-WebRequest -Uri "https://github.com/OSSign/goast/releases/latest/download/azuresigntool.exe" -OutFile "D:\a\azuresigntool.exe"
           ls .\build\bin\
-          Move-Item -Path ".\build\bin\excaliapp" ".\build\bin\excaliapp.exe" -ErrorAction Continue
 
       - name: Sign files
         uses: ossign/gha-sign-azuresigntool@main
@@ -110,7 +108,16 @@ jobs:
               exit $exitCode
           }
 
-          C:\Program Files (x86)\NSIS\Bin\makensis.exe "-DARG_WAILS_AMD64_BINARY=..\..\bin\excaliapp.exe" .\build\windows\installer\project.nsi
+          $process = Start-Process "C:\Program Files (x86)\NSIS\Bin\makensis.exe" -ArgumentList "-DARG_WAILS_AMD64_BINARY=..\..\bin\excaliapp.exe", ".\build\windows\installer\project.nsi" -Wait -PassThru
+          $exitCode = $process.ExitCode
+          if ($exitCode -eq 0) {
+              Write-Host "MakeNSIS Successful."
+          } else {
+              Write-Host "MakeNSIS failed with exit code $exitCode."
+              exit $exitCode
+          }
+
+          
       
       - name: Save artifacts
         uses: actions/upload-artifact@v4
