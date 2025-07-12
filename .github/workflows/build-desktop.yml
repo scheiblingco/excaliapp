@@ -73,7 +73,7 @@ jobs:
           go-version: '1.24.2'
 
       - name: Sign files
-        uses: ossign/gha-sign-azuresigntool@latest
+        uses: ossign/gha-sign-azuresigntool@main
         if: matrix.build.platform == 'windows/amd64'
         with:
           certificateName: ${{ secrets.AST_CERT }}
