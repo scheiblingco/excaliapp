@@ -56,11 +56,7 @@ jobs:
           package: false
           go-version: '1.24.2'
       
-      - name: Fetch AzureSignTool
-        if: matrix.build.platform == 'windows/amd64'
-        run: |
-          $ErrorActionPreference = "Stop"
-          Invoke-WebRequest -Uri "https://github.com/OSSign/goast/releases/latest/download/azuresigntool.exe" -OutFile "D:\a\azuresigntool.exe"
+     
 
       - name: Build wails
         uses: dAppServer/wails-build-action@main
@@ -71,6 +67,20 @@ jobs:
           build-platform: ${{ matrix.build.platform }}
           package: false
           go-version: '1.24.2'
+      
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-presign
+          path: build/bin/
+
+      - name: Fetch AzureSignTool
+        if: matrix.build.platform == 'windows/amd64'
+        run: |
+          $ErrorActionPreference = "Stop"
+          Invoke-WebRequest -Uri "https://github.com/OSSign/goast/releases/latest/download/azuresigntool.exe" -OutFile "D:\a\azuresigntool.exe"
+          ls .\build\bin\
+          Move-Item -Path ".\build\bin\excaliapp" ".\build\bin\excaliapp.exe" -ErrorAction Continue
 
       - name: Sign files
         uses: ossign/gha-sign-azuresigntool@main
