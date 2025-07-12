@@ -72,7 +72,7 @@ jobs:
         # Only of not a tag
         if: startsWith(github.ref, 'refs/heads/')
         with:
-          name: windows
+          name: ${{ matrix.build.os }}-artifacts
           path: build/bin/
       
       - name: Build fully signed NSIS installer
