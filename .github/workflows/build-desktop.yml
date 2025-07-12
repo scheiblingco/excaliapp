@@ -66,20 +66,41 @@ jobs:
         uses: dAppServer/wails-build-action@main
         id: build
         if: matrix.build.platform == 'windows/amd64'
-        env:
-          AZURESIGNTOOL_VAULT: ${{ secrets.AST_VAULT }}
-          AZURESIGNTOOL_CERT: ${{ secrets.AST_CERT }}
-          AZURESIGNTOOL_IDENT: ${{ secrets.AST_IDENT }}
-          AZURESIGNTOOL_SECRET: ${{ secrets.AST_SECRET }}
-          AZURESIGNTOOL_TENANT: ${{ secrets.AST_TENANT }}
-          AZURESIGNTOOL_TIMESTAMP: ${{ secrets.AST_TIMESTAMP }}
-          AZURESIGNTOOL_TD: ${{ secrets.AST_TD }}
         with:
           build-name: ${{ matrix.build.name }}
           build-platform: ${{ matrix.build.platform }}
           package: false
-          nsis: true
           go-version: '1.24.2'
+
+      - name: Sign files
+        uses: ossign/gha-sign-azuresigntool@latest
+        if: matrix.build.platform == 'windows/amd64'
+        with:
+          certificateName: ${{ secrets.AST_CERT }}
+          clientId: ${{ secrets.AST_IDENT }}
+          clientSecret: ${{ secrets.AST_SECRET }}
+          tenantId: ${{ secrets.AST_TENANT }}
+          hashAlgorithm: ${{ secrets.AST_TD }}
+          timestampUrl: ${{ secrets.AST_TIMESTAMP }}
+          vaultUrl: ${{ secrets.AST_VAULT }}
+          files: build/bin/*
+          extensions: .exe;.msi
+      
+      - name: Build NSIS installer
+        if: matrix.build.platform == 'windows/amd64'
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest https://deac-riga.dl.sourceforge.net/project/nsis/NSIS%203/3.10/nsis-3.10-setup.exe?viasf=1 -OutFile .\nsis-3.10-setup.exe
+          $process = Start-Process ".\nsis-3.10-setup.exe" -ArgumentList "/S" -Wait -PassThru
+          $exitCode = $process.ExitCode
+          if ($exitCode -eq 0) {
+              Write-Host "Installer ran successfully."
+          } else {
+              Write-Host "Installer failed with exit code $exitCode."
+              exit $exitCode
+          }
+
+          C:\Program Files (x86)\NSIS\Bin\makensis.exe "-DARG_WAILS_AMD64_BINARY=..\..\bin\excaliapp.exe" .\build\windows\installer\project.nsi
       
       - name: Save artifacts
         uses: actions/upload-artifact@v4

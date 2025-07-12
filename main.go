@@ -69,7 +69,7 @@ func main() {
 		MaxWidth:          5000,
 		MaxHeight:         5000,
 		DisableResize:     false,
-		Fullscreen:        true,
+		Fullscreen:        false,
 		Frameless:         false,
 		StartHidden:       false,
 		HideWindowOnClose: false,
