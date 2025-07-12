@@ -5,8 +5,8 @@ on:
     branches:
       - main
       - add-desktop
-    # tags:
-    #   - '*'
+    tags:
+      - '*'
 
 env:
   NODE_OPTIONS: "--max-old-space-size=4096"
@@ -39,6 +39,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      
+      - name: Setup Node Cache
+        uses: actions/cache@v4
+        with:
+          key: ${{ github.job }}-${{ hashFiles('**/package-lock.json') }}
+          path: node_modules
       
       - name: Install and build
         run: |
@@ -73,26 +79,6 @@ jobs:
           nsis: true
           go-version: '1.24.2'
       
-      - name: Save artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-presign
-          path: build/bin/
-
-      - name: Sign files
-        uses: ossign/gha-sign-azuresigntool@main
-        if: matrix.build.platform == 'windows/amd64'
-        with:
-          certificateName: ${{ secrets.AST_CERT }}
-          clientId: ${{ secrets.AST_IDENT }}
-          clientSecret: ${{ secrets.AST_SECRET }}
-          tenantId: ${{ secrets.AST_TENANT }}
-          hashAlgorithm: ${{ secrets.AST_TD }}
-          timestampUrl: ${{ secrets.AST_TIMESTAMP }}
-          vaultUrl: ${{ secrets.AST_VAULT }}
-          files: build/bin/*
-          extensions: exe;msi
-      
       - name: Build NSIS installer
         if: matrix.build.platform == 'windows/amd64'
         env:
@@ -125,10 +111,24 @@ jobs:
 
           rm .\build\bin\*installer.exe
 
+          D:\a\azuresigntool.exe build\bin\excaliapp.exe
+
           makensis.exe "-DARG_WAILS_AMD64_BINARY=..\..\bin\excaliapp.exe" ".\build\windows\installer\project.nsi"          
       
       - name: Save artifacts
         uses: actions/upload-artifact@v4
+        # Only of not a tag
+        if: matrix.build.platform == 'windows/amd64' && startsWith(github.ref, 'refs/heads/')
         with:
           name: windows
           path: build/bin/
+      
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/bin/
+          tag_name: ${{ github.ref_name }}
+          name: Version ${{ github.ref_name }}
+          body: |
+            ## Excaliapp Desktop Release
+            This release includes the latest desktop build of Excaliapp
