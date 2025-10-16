@@ -51,6 +51,11 @@ jobs:
           key: ${{ github.job }}-${{ hashFiles('**/package-lock.json') }}
           path: node_modules
       
+      - name: Setup OSSign
+        uses: ossign/actions/setup-ossign@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Install and build
         run: |
           npm i -g bun
@@ -78,16 +83,9 @@ jobs:
       - name: Build fully signed NSIS installer
         if: matrix.build.platform == 'windows/amd64' && startsWith(github.ref, 'refs/tags/')
         env:
-          AZURESIGNTOOL_VAULT: ${{ secrets.AST_VAULT }}
-          AZURESIGNTOOL_CERT: ${{ secrets.AST_CERT }}
-          AZURESIGNTOOL_IDENT: ${{ secrets.AST_IDENT }}
-          AZURESIGNTOOL_SECRET: ${{ secrets.AST_SECRET }}
-          AZURESIGNTOOL_TENANT: ${{ secrets.AST_TENANT }}
-          AZURESIGNTOOL_TIMESTAMP: ${{ secrets.AST_TIMESTAMP }}
-          AZURESIGNTOOL_TD: ${{ secrets.AST_TD }}
+          OSSIGN_CONFIG: ${{ secrets.OSSIGN_CONFIG }}
         run: |
           $ProgressPreference = 'SilentlyContinue'
-          Invoke-WebRequest -Uri "https://github.com/OSSign/goast/releases/latest/download/azuresigntool.exe" -OutFile "D:\a\azuresigntool.exe"
           Invoke-WebRequest https://deac-riga.dl.sourceforge.net/project/nsis/NSIS%203/3.10/nsis-3.10-setup.exe?viasf=1 -OutFile .\nsis-3.10-setup.exe
           $process = Start-Process ".\nsis-3.10-setup.exe" -ArgumentList "/S" -Wait -PassThru
           $exitCode = $process.ExitCode
@@ -108,7 +106,7 @@ jobs:
 
           rm .\build\bin\*installer.exe
 
-          D:\a\azuresigntool.exe build\bin\excaliapp.exe
+          ossign.exe build\bin\excaliapp.exe
 
           makensis.exe "-DARG_WAILS_AMD64_BINARY=..\..\bin\excaliapp.exe" ".\build\windows\installer\project.nsi"          
       

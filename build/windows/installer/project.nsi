@@ -69,8 +69,8 @@ ManifestDPIAware true
 !insertmacro MUI_LANGUAGE "English" # Set the Language of the installer
 
 ## The following two statements can be used to sign the installer and the uninstaller. The path to the binaries are provided in %1
-!uninstfinalize 'D:\a\azuresigntool.exe "%1"'
-!finalize 'D:\a\azuresigntool.exe "%1"'
+!uninstfinalize 'ossign.exe -t pecoff -o "%1" "%1"'
+!finalize 'ossign.exe -t pecoff -o "%1" "%1"'
 
 !macro sign.files
     !ifdef SUPPORTS_AMD64

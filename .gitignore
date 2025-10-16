@@ -34,3 +34,6 @@ wrangler.toml
 
 build/bin
 build/windows/installer/tmp
+
+
+.secrets
