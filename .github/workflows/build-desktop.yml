@@ -106,7 +106,11 @@ jobs:
 
           rm .\build\bin\*installer.exe
 
-          ossign.exe build\bin\excaliapp.exe
+          ls .\build\bin\
+
+          ossign.exe -t pecoff build\bin\excaliapp.exe -o build\bin\excaliapp.exe
+
+          ls .\build\bin\
 
           makensis.exe "-DARG_WAILS_AMD64_BINARY=..\..\bin\excaliapp.exe" ".\build\windows\installer\project.nsi"          
       
